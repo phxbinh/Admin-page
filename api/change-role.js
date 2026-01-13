@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
+      alert("Change role of user")
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -24,7 +25,6 @@ export default async function handler(req, res) {
 
   if (error) {
     console.error(error);
-    alert("binh")
     return res.status(500).json({ error: error.message });
   }
 
