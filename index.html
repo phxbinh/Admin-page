@@ -91,7 +91,7 @@
                   fetch('/api/change-role', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: user.id, newRole })
+                    body: JSON.stringify({uId: user.id, newRole })
                   })
                   .then(r => r.json())
                   .then(data => {
