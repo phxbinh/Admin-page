@@ -17,13 +17,28 @@ export default async function handler(req, res) {
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
-
+/*
   const { error } = await supabase.auth.admin.deleteUser(userId);
+*/
 
+try {
+  const { error } = await supabase.auth.admin.deleteUser(userId);
+  if (error) {
+    console.error('Supabase deleteUser error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+  return res.status(200).json({ success: true });
+} catch(e) {
+  console.error('Exception:', e);
+  return res.status(500).json({ error: e.message });
+}
+
+/*
   if (error) {
     console.error(error);
     return res.status(500).json({ error: error.message });
   }
+*/
 
   return res.status(200).json({ success: true });
 }
