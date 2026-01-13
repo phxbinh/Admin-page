@@ -2,16 +2,41 @@
   "version": 2,
   "builds": [
     {
-      "src": "*.html",
+      "src": "index.html",
       "use": "@vercel/static"
     },
     {
-      "src": "api/**/*.js",
+      "src": "Debugger.js",
+      "use": "@vercel/static"
+    },
+        {
+      "src": "vdom.js",
+      "use": "@vercel/static"
+    },
+        {
+      "src": "hooks.js",
+      "use": "@vercel/static"
+    },
+        {
+      "src": "router.js",
+      "use": "@vercel/static"
+    },
+        {
+      "src": "init_API.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "api/*.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/$1" }
+    { "src": "/Debugger.js", "dest": "/Debugger.js" },
+    { "src": "/vdom.js", "dest": "/vdom.js" },
+    { "src": "/hooks.js", "dest": "/hooks.js" },
+    { "src": "/router.js", "dest": "/router.js" },
+    { "src": "/init_API.js", "dest": "/init_API.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
