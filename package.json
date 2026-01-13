@@ -1,4 +1,8 @@
 {
-  "name": "demo-supabase",
-  "private": true
+  "name": "admin-page",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vercel/node": "^3.0.0"
+  }
 }
