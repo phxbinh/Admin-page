@@ -362,10 +362,23 @@ window.App = window.App || {};
       if (key === "preventXSS") continue;
 
       // --- value / checked / boolean props ---
+/*
       if (key === "value") {
         if (el.value !== value) el.value = value ?? "";
         continue;
       }
+*/
+if (key === "value" && el.tagName === "SELECT") {
+  const next = value ?? "";
+  if (el.value !== next) {
+    const options = el.options;
+    for (let i = 0; i < options.length; i++) {
+      options[i].selected = options[i].value === next;
+    }
+  }
+  continue;
+}
+
 
       if (key === "checked") {
         el.checked = !!value;
