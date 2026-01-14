@@ -55,7 +55,7 @@
 <script src="./hooks.js"></script>
 <script src="./router.js"></script>
 <script src="./init_API.js"></script>
-
+<!----
   <script>
     // ==========================================
     // Hardcode mock data trước (sau này thay bằng fetch)
@@ -172,5 +172,143 @@
       //   });
     });
   </script>
+  <!---->
+  
+  <script>
+  // ==========================================
+  // Mock data (giữ nguyên)
+  // ==========================================
+  const mockUsers = [
+    { id: 'cda90efc-4bcd-4d50-bb07-88eb339f49f0', email: 'user1@example.com', role: 'user' },
+    { id: 'a7b1c9d3-2e4f-4b6a-8c7d-9e0f1a2b3c4d', email: 'admin2@example.com', role: 'admin' },
+    { id: '894e9307-df5a-4933-b14b-4fa6496ed363', email: 'test3@gmail.com', role: 'user' },
+    { id: '9a8b7c6d-5e4f-4a3b-2c1d-0e9f8a7b6c5d', email: 'demo4@site.vn', role: 'moderator' }
+  ];
+
+  // ==========================================
+  // Render users – THUẦN DOM
+  // ==========================================
+  function renderUsers(users = mockUsers) {
+    const tableBody = document.getElementById('user-body');
+    tableBody.innerHTML = '';
+
+    users.forEach(user => {
+      const tr = document.createElement('tr');
+
+      // Email
+      const tdEmail = document.createElement('td');
+      tdEmail.textContent = user.email;
+
+      // User ID (rút gọn)
+      const tdId = document.createElement('td');
+      tdId.textContent = user.id.substring(0, 8) + '...';
+
+      // Role select
+      const tdRole = document.createElement('td');
+      const select = document.createElement('select');
+
+      ['user', 'admin', 'moderator'].forEach(role => {
+        const option = document.createElement('option');
+        option.value = role;
+        option.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+        if (role === user.role) option.selected = true;
+        select.appendChild(option);
+      });
+
+      select.addEventListener('change', () => {
+        const newRole = select.value;
+        if (newRole === user.role) return;
+
+        if (!confirm(`Đổi role của ${user.email} thành ${newRole}?`)) {
+          select.value = user.role; // rollback
+          return;
+        }
+
+        fetch('/api/change-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, newRole })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            alert('Đổi role thành công');
+            location.reload();
+          } else {
+            alert('Lỗi: ' + (data.error || 'Không xác định'));
+            select.value = user.role;
+          }
+        })
+        .catch(err => {
+          alert('Lỗi mạng: ' + err.message);
+          select.value = user.role;
+        });
+      });
+
+      tdRole.appendChild(select);
+
+      // Delete button
+      const tdAction = document.createElement('td');
+      const btnDelete = document.createElement('button');
+      btnDelete.textContent = 'Xóa';
+
+      btnDelete.addEventListener('click', () => {
+        if (!confirm(`Xóa người dùng ${user.email}?`)) return;
+
+        fetch('/api/delete-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            alert('Xóa thành công');
+            location.reload();
+          } else {
+            alert('Lỗi: ' + (data.error || 'Không xác định'));
+          }
+        })
+        .catch(err => alert('Lỗi mạng: ' + err.message));
+      });
+
+      tdAction.appendChild(btnDelete);
+
+      // Append
+      tr.appendChild(tdEmail);
+      tr.appendChild(tdId);
+      tr.appendChild(tdRole);
+      tr.appendChild(tdAction);
+      tableBody.appendChild(tr);
+    });
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('user-table').style.display = 'table';
+  }
+
+  // ==========================================
+  // Init
+  // ==========================================
+  document.addEventListener('DOMContentLoaded', () => {
+    renderUsers();
+
+    // Sau này dùng thật:
+    // fetch('/api/users')
+    //   .then(r => r.json())
+    //   .then(renderUsers)
+    //   .catch(err => {
+    //     document.getElementById('loading').textContent =
+    //       'Lỗi tải dữ liệu: ' + err.message;
+    //   });
+  });
+</script>
+  
+  
+  
+  
+  
+  
+  
+  
 </body>
 </html>
