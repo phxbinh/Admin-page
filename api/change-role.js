@@ -19,10 +19,19 @@ export default async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
+/*
   const { error } = await supabase
     .from('profiles')
     .update({ role: newRole })
     .eq('id', userId);
+*/
+const { data, error } = await supabase
+  .from('profiles')
+  .update({ role: newRole })
+  .eq('id', userId)
+  .select('id, role');
+
+console.log('UPDATE RESULT', { data, error });
 
   if (error) {
     console.error(error);
