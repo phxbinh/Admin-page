@@ -28,7 +28,7 @@ export default async function handlerU(req, res) {
 
 const { data, error } = await supabase
   .from('profiles')
-  .update({ user_role: newRole })
+  .update({ role: newRole })
   .eq('id', userId)
   .select('id, role');
 
