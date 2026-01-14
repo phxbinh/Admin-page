@@ -184,15 +184,29 @@
     { id: '894e9307-df5a-4933-b14b-4fa6496ed363', email: 'test3@gmail.com', role: 'user' },
     { id: '9a8b7c6d-5e4f-4a3b-2c1d-0e9f8a7b6c5d', email: 'demo4@site.vn', role: 'moderator' }
   ];
+async function loadUsers() {
+  try {
+    const res = await fetch('/api/users');
+    const data = await res.json();
 
+    if (!res.ok) {
+      throw new Error(data.error || 'Fetch users failed');
+    }
+
+    renderUsers(data);
+  } catch (err) {
+    document.getElementById('loading').textContent =
+      'Lỗi tải danh sách: ' + err.message;
+  }
+}
   // ==========================================
   // Render users – THUẦN DOM
   // ==========================================
-  function renderUsers(users = mockUsers) {
+  function renderUsers(data) {
     const tableBody = document.getElementById('user-body');
     tableBody.innerHTML = '';
 
-    users.forEach(user => {
+    data.forEach(user => {
       const tr = document.createElement('tr');
 
       // Email
@@ -290,8 +304,8 @@
   // Init
   // ==========================================
   document.addEventListener('DOMContentLoaded', () => {
-    renderUsers();
-
+    //renderUsers();
+    loadUsers(); // ← dùng data thật
     // Sau này dùng thật:
     // fetch('/api/users')
     //   .then(r => r.json())
