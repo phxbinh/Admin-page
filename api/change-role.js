@@ -1,7 +1,7 @@
 // api/change-role.js
 import { createClient } from '@supabase/supabase-js';
 
-/*
+
 export default async function handler(req, res) {
       alert("Change role of user")
   if (req.method !== 'POST') {
@@ -31,9 +31,9 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ success: true });
 }
-*/
 
 
+/*
 // api/change-role.js
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -46,6 +46,6 @@ export default async function handler(req, res) {
   console.log('Mock change role:', userId, '->', newRole);
   return res.status(200).json({ success: true, message: `Mock đổi role thành ${newRole}` });
 }
-
+*/
 
 
