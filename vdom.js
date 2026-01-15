@@ -827,6 +827,14 @@ if (key === "value" && "value" in el) {
     oldVNode.children = (oldVNode.children || []).map(toVNode);
     newVNode.children = (newVNode.children || []).map(toVNode);
     patchChildren(el, oldVNode.children, newVNode.children);
+    // Sau khi patch children
+if (el.tagName === "SELECT" && newProps && "value" in newProps) {
+  const next = newProps.value ?? "";
+  if (el.value !== next) {
+    el.value = next;
+  }
+}
+    
   }
 
 
