@@ -59,7 +59,7 @@ function UserRoleEditor({ user, onChangeRole }) {
         onChange: e => setNextRole(e.target.value),
         defaultValue: user.role   // ⚠️ uncontrolled → không bug
       },
-        ["user", "admin", "moderator"].map(r =>
+        ["-Select Role-", "user", "admin", "moderator"].map(r =>
           h("option", { value: r }, r)
         )
       ),
