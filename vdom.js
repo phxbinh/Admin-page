@@ -368,14 +368,14 @@ window.App = window.App || {};
         continue;
       }
 */
-if (key === "value" && el.tagName === "select") {
+// --- value ---
+if (key === "value" && "value" in el) {
   const next = value ?? "";
+
   if (el.value !== next) {
-    const options = el.options;
-    for (let i = 0; i < options.length; i++) {
-      options[i].selected = options[i].value === next;
-    }
+    el.value = next;
   }
+
   continue;
 }
 
