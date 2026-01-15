@@ -6,6 +6,7 @@ function UserRoleEditor({ user, onChangeRole }) {
 
   return h("div", { style: { minWidth: "160px" } }, [
 
+    // Role hiện tại
     h("div", {
       style: {
         fontWeight: "bold",
@@ -16,11 +17,12 @@ function UserRoleEditor({ user, onChangeRole }) {
 
     h("hr"),
 
+    // Chọn role mới
     h("div", { style: { display: "flex", gap: "6px" } }, [
 
       h("select", {
         onChange: e => setNextRole(e.target.value),
-        defaultValue: user.role
+        defaultValue: user.role   // ⚠️ uncontrolled → không bug
       },
         ["-Select Role-", "user", "admin", "moderator"].map(r =>
           h("option", { value: r }, r)
@@ -38,7 +40,7 @@ function UserRoleEditor({ user, onChangeRole }) {
     ])
   ]);
 }
-
+ 
 function AdminUsersPage() {
   const { h } = window.App.VDOM;
   const { useState, useEffect } = window.App.Hooks;
@@ -47,6 +49,9 @@ function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // ===============================
+  // Load users
+  // ===============================
   async function loadUsers() {
     try {
       setLoading(true);
@@ -71,10 +76,15 @@ function AdminUsersPage() {
     loadUsers();
   }, []);
 
+  // ===============================
+  // Change role
+  // ===============================
   async function changeRole(user, newRole) {
     if (newRole === user.role) return;
 
-    if (!confirm(`Đổi role của ${user.email} thành ${newRole}?`)) return;
+    if (!confirm(`Đổi role của ${user.email} thành ${newRole}?`)) {
+      return;
+    }
 
     try {
       const res = await fetch("/api/change-role", {
@@ -90,12 +100,15 @@ function AdminUsersPage() {
       }
 
       alert("Đổi role thành công");
-      loadUsers();
+      loadUsers(); // reload list
     } catch (err) {
       alert("Lỗi: " + err.message);
     }
   }
 
+  // ===============================
+  // Delete user
+  // ===============================
   async function deleteUser(user) {
     if (!confirm(`Xóa người dùng ${user.email}?`)) return;
 
@@ -119,20 +132,34 @@ function AdminUsersPage() {
     }
   }
 
+  // ===============================
+  // Render states
+  // ===============================
   if (loading) {
-    return h("div", { id: "loading" }, "Đang tải danh sách người dùng...");
+    return h("div", { id: "loading" }, "Đang tải danh sách...");
   }
 
   if (error) {
-    return h("div", { style: { color: "red", padding: "20px", textAlign: "center" } }, error);
+    return h("div", { style: { color: "red", padding: "20px" } }, error);
   }
 
-  return h("div", { class: "container" },
-    h("a", { style: { display: "block", textAlign: "center", margin: "16px 0" }, href: "/debug-users"}, "Thông tin đầy đủ"),
+  // ===============================
+  // Render table
+  // ===============================
+  return h("div", { style: { padding: "20px" } },
+    h("a", { style: { textAlign: "center" }, href: "/debug-users"}, "Thông tin đầy đủ"),
+    h("h1", { style: { textAlign: "center" } }, "Admin - Quản lý người dùng"),
 
-    h("h1", null, "Admin - Quản lý người dùng"),
-
-    h("table", null,
+    h("table", {
+      style: {
+        width: "100%",
+        borderCollapse: "collapse",
+        background: "white",
+        marginTop: "20px"
+      },
+      border: 1,
+      cellPadding: 10
+    },
       h("thead", null,
         h("tr", null,
           h("th", null, "Email"),
@@ -145,8 +172,11 @@ function AdminUsersPage() {
       h("tbody", null,
         users.map(user =>
           h("tr", { key: user.id },
+
             h("td", null, user.email),
+
             h("td", null, user.id.slice(0, 8) + "..."),
+
             h("td", null,         
               h(UserRoleEditor, {
                 user,
@@ -155,7 +185,15 @@ function AdminUsersPage() {
             ),
             h("td", null,
               h("button", {
-                onClick: () => deleteUser(user)
+                onClick: () => deleteUser(user),
+                style: {
+                  padding: "6px 12px",
+                  background: "#e74c3c",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }
               }, "Xóa")
             )
           )
@@ -165,164 +203,7 @@ function AdminUsersPage() {
   );
 }
 
-// ────────────────────────────────────────────────
-//               AUTH + PROTECTION
-// ────────────────────────────────────────────────
 
-function AuthPage({ onLoginSuccess }) {
-  const { h } = window.App.VDOM;
-  const { useState } = window.App.Hooks;
+window.App.Router.addRoute("/", AdminUsersPage);
 
-  const [email, setEmail]     = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState("");
-
-  async function handleLogin(e) {
-    e.preventDefault();
-    setError("");
-
-    if (!email || !password) {
-      setError("Vui lòng nhập đầy đủ email và mật khẩu");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const { data, error: signInError } = await window.supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
-
-      const { data: profile, error: profileError } = await window.supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
-
-      if (profileError || !profile) {
-        throw new Error("Không thể lấy thông tin profile");
-      }
-
-      if (profile.role !== "admin") {
-        await window.supabase.auth.signOut();
-        throw new Error("Bạn không có quyền admin để truy cập trang này");
-      }
-
-      onLoginSuccess();
-    } catch (err) {
-      setError(err.message || "Đăng nhập thất bại");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return h("div", { class: "auth-container" },
-    h("h2", null, "Đăng nhập Admin"),
-
-    error && h("div", { class: "error-msg" }, error),
-
-    h("form", { onSubmit: handleLogin },
-      h("input", {
-        type: "email",
-        placeholder: "Email",
-        value: email,
-        onInput: e => setEmail(e.target.value),
-        required: true
-      }),
-
-      h("input", {
-        type: "password",
-        placeholder: "Mật khẩu",
-        value: password,
-        onInput: e => setPassword(e.target.value),
-        required: true
-      }),
-
-      h("button", {
-        type: "submit",
-        disabled: loading
-      }, loading ? "Đang đăng nhập..." : "Đăng nhập")
-    )
-  );
-}
-
-function AdminLayout({ children }) {
-  const { h } = window.App.VDOM;
-  const { useState, useEffect } = window.App.Hooks;
-
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    async function checkAdmin() {
-      try {
-        const { data: { session } } = await window.supabase.auth.getSession();
-
-        if (!session?.user) {
-          setIsAdmin(false);
-          setChecking(false);
-          return;
-        }
-
-        const { data: profile } = await window.supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-
-        setIsAdmin(profile?.role === "admin");
-      } catch (err) {
-        console.error(err);
-        setIsAdmin(false);
-      } finally {
-        setChecking(false);
-      }
-    }
-
-    checkAdmin();
-
-    const { data: listener } = window.supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        setIsAdmin(false);
-      }
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  if (checking) {
-    return h("div", { id: "loading" }, "Đang kiểm tra quyền truy cập...");
-  }
-
-  if (!isAdmin) {
-    return h(AuthPage, { onLoginSuccess: () => setIsAdmin(true) });
-  }
-
-  return h("div", null,
-    h("header", null,
-      h("div", null, "Admin Panel"),
-      h("button", {
-        onClick: async () => {
-          await window.supabase.auth.signOut();
-          setIsAdmin(false);
-        }
-      }, "Đăng xuất")
-    ),
-    children
-  );
-}
-
-// ────────────────────────────────────────────────
-//                  ROUTER
-// ────────────────────────────────────────────────
-
-window.App.Router.addRoute("/", () =>
-  h(AdminLayout, {children: AdminUsersPage})
-  )
-);
-
-window.App.Router.init(document.getElementById("app"), { hash: false });
+window.App.Router.init(document.getElementById("app"), {hash: false})
