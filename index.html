@@ -198,7 +198,7 @@ function AdminUsersPage() {
 
                       // Role select
             h('select', {
-              value: user.role,
+              //value: user.role,
 // Nếu để value lại -> bị lỗi: Do vdom chưa patchProps cho value của thẻ select
               onchange: e => {
                 const newRole = e.target.value;
