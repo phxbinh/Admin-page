@@ -184,7 +184,7 @@ function AdminUsersPage() {
             h("td", null, user.id.slice(0, 8) + "..."),
 
             h("td", null,
-
+              /*
               h("select", {
                 value: user.role,
                 onChange: e => changeRole(user, e.target.value)
@@ -195,6 +195,19 @@ function AdminUsersPage() {
                   )
                 )
               )
+              */
+h("select", {
+  onChange: e => changeRole(user, e.target.value)
+},
+  ["user", "admin", "moderator"].map(role =>
+    h("option", { value: role },
+      role.charAt(0).toUpperCase() + role.slice(1)
+    )
+  )
+)
+
+
+
             ),
             h("td", null,
               h("button", {
