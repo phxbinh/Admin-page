@@ -153,6 +153,7 @@ function AdminUsersPage() {
   // Render table
   // ===============================
   return h("div", { style: { padding: "20px" } },
+    h("h1", { style: { textAlign: "center" }, href: "/debug-users"}, "Thông tin đầy đủ"),
     h("h1", { style: { textAlign: "center" } }, "Admin - Quản lý người dùng"),
 
     h("table", {
@@ -195,41 +196,6 @@ function AdminUsersPage() {
                 )
               )
             ),
-
-
-/*
-                      // Role select
-            h('select', {
-              //value: user.role,
-// Nếu để value lại -> bị lỗi: Do vdom chưa patchProps cho value của thẻ select
-              onchange: e => {
-                const newRole = e.target.value;
-                if (newRole === user.role) return;
-                if (confirm(`Đổi role của ${user.email} thành ${newRole}?`)) {
-                  fetch('/api/change-role', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({userId: user.id, newRole })
-                  })
-                  .then(r => r.json())
-                  .then(data => {
-                    if (data.success) {
-                      alert('Đổi role thành công');
-                      location.reload(); // đơn giản nhất
-                    } else {
-                      alert('Lỗi: ' + (data.error || 'Không xác định'));
-                    }
-                  })
-                  .catch(err => alert('Lỗi mạng: ' + err.message));
-                }
-              }
-            },
-              h('option', { value: 'user' }, 'User'),
-              h('option', { value: 'admin' }, 'Admin'),
-              h('option', { value: 'moderator' }, 'Moderator')
-            )
-          ),
-*/
             h("td", null,
               h("button", {
                 onClick: () => deleteUser(user),
@@ -250,7 +216,139 @@ function AdminUsersPage() {
   );
 }
 
+
+function UsersDebugPage() {
+  const { h } = window.App.VDOM;
+  const { useState, useEffect } = window.App.Hooks;
+
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ==========================================
+  // Fetch users
+  // ==========================================
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/users");
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Fetch users failed");
+        }
+
+        if (!cancelled) {
+          setUsers(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message);
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ==========================================
+  // Render states
+  // ==========================================
+  if (loading) {
+    return h("div", { style: { padding: "2rem" } }, "⏳ Đang tải users...");
+  }
+
+  if (error) {
+    return h(
+      "pre",
+      { style: { color: "red", padding: "2rem", whiteSpace: "pre-wrap" } },
+      "❌ Lỗi:\n" + error
+    );
+  }
+
+  // ==========================================
+  // Render users data (FULL)
+  // ==========================================
+  return h(
+    "div",
+    { style: { padding: "2rem" } },
+
+    h("h2", null, "Users Debug View"),
+
+    h(
+      "table",
+      {
+        border: 1,
+        cellPadding: 8,
+        style: { borderCollapse: "collapse", width: "100%" }
+      },
+
+      h(
+        "thead",
+        null,
+        h("tr", null,
+          h("th", null, "Index"),
+          h("th", null, "ID"),
+          h("th", null, "Email"),
+          h("th", null, "Role")
+        )
+      ),
+
+      h(
+        "tbody",
+        null,
+        users.map((u, i) =>
+          h(
+            "tr",
+            { key: u.id },
+
+            h("td", null, String(i)),
+            h("td", null, u.id),
+            h("td", null, u.email),
+            h(
+              "td",
+              {
+                style: {
+                  fontWeight: "bold",
+                  color: u.role === "admin" ? "green" : "#333"
+                }
+              },
+              u.role
+            )
+          )
+        )
+      )
+    ),
+
+    // RAW JSON (debug cực mạnh)
+    h("h3", { style: { marginTop: "2rem" } }, "Raw JSON"),
+    h(
+      "pre",
+      {
+        style: {
+          background: "#111",
+          color: "#0f0",
+          padding: "1rem",
+          overflowX: "auto"
+        }
+      },
+      JSON.stringify(users, null, 2)
+    )
+  );
+}
+
+
+
+
 window.App.Router.addRoute("/", AdminUsersPage);
+window.App.Router.addRoute("/debug-users", UsersDebugPage);
 window.App.Router.init(document.getElementById("app"), {hash: false})
 
 </script>
