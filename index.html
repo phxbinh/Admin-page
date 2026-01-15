@@ -16,6 +16,17 @@
     #loading { text-align: center; padding: 50px; color: #666; }
   </style>
   
+  <script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  window.supabase = createClient(
+    'https://defkqhylqphoqiikvbii.supabase.co',
+    'sb_publishable_vzdQpgqjLL2VE0Oyc0kEJQ_P8XqBwkh'
+  );
+
+  console.log('Supabase READY');
+  </script>
+  
 </head>
 <body>
 
