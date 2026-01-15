@@ -16,6 +16,20 @@
     #loading { text-align: center; padding: 50px; color: #666; }
   </style>
   
+  
+  <!-- INIT SUPABASE TRƯỚC --
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  window.supabase = createClient(
+    'https://defkqhylqphoqiikvbii.supabase.co',
+    'sb_publishable_vzdQpgqjLL2VE0Oyc0kEJQ_P8XqBwkh'
+  );
+
+  console.log('Supabase READY');
+  </script>
+  <!---->
+  
 </head>
 <body>
 
@@ -23,7 +37,6 @@
 
   <div id="loading">Đang tải danh sách...</div>
 
-<!----
   <table id="user-table" style="display:none;">
     <thead>
       <tr>
@@ -35,189 +48,273 @@
     </thead>
     <tbody id="user-body"></tbody>
   </table>
-<!---->
-   <div id="app"></div>
+
   <!-- Load VDOM -->
   <script src="./Debugger.js"></script>
 <script src="./vdom.js"></script>
 <script src="./hooks.js"></script>
 <script src="./router.js"></script>
 <script src="./init_API.js"></script>
+<!----
+  <script>
+    // ==========================================
+    // Hardcode mock data trước (sau này thay bằng fetch)
+    // ==========================================
+/*
+1. 3f9c2e5b-8a4f-4c2b-9e7d-1a2f3b4c5d6e
+2. a7b1c9d3-2e4f-4b6a-8c7d-9e0f1a2b3c4d
+3. 5d6e7f8a-1b2c-4d3e-9f0a-1b2c3d4e5f6a
+4. 9a8b7c6d-5e4f-4a3b-2c1d-0e9f8a7b6c5d
 
+*/
+
+    const mockUsers = [
+      { id: 'cda90efc-4bcd-4d50-bb07-88eb339f49f0', email: 'user1@example.com', role: 'user' },
+      { id: 'a7b1c9d3-2e4f-4b6a-8c7d-9e0f1a2b3c4d', email: 'admin2@example.com', role: 'admin' },
+      { id: '894e9307-df5a-4933-b14b-4fa6496ed363', email: 'test3@gmail.com', role: 'user' },
+      { id: '9a8b7c6d-5e4f-4a3b-2c1d-0e9f8a7b6c5d', email: 'demo4@site.vn', role: 'moderator' }
+    ];
+
+    // ==========================================
+    // Render bằng VDOM (khi có dữ liệu)
+    // ==========================================
+    function renderUsers(users = mockUsers) {
+      const { h, render } = window.App.VDOM;
+
+      const tableBody = document.getElementById('user-body');
+      tableBody.innerHTML = ''; // clear trước
+
+      users.forEach(user => {
+        const row = h('tr', {},
+          h('td', {}, user.email),
+          h('td', {}, user.id.substring(0, 8) + '...'),
+          h('td', {},
+            // Role select
+            h('select', {
+              value: user.role,
+// Nếu để value lại -> bị lỗi: Do vdom chưa patchProps cho value của thẻ select
+              onchange: e => {
+                const newRole = e.target.value;
+                if (newRole === user.role) return;
+                if (confirm(`Đổi role của ${user.email} thành ${newRole}?`)) {
+                  fetch('/api/change-role', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({userId: user.id, newRole })
+                  })
+                  .then(r => r.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert('Đổi role thành công');
+                      location.reload(); // đơn giản nhất
+                    } else {
+                      alert('Lỗi: ' + (data.error || 'Không xác định'));
+                    }
+                  })
+                  .catch(err => alert('Lỗi mạng: ' + err.message));
+                }
+              }
+            },
+              h('option', { value: 'user' }, 'User'),
+              h('option', { value: 'admin' }, 'Admin'),
+              h('option', { value: 'moderator' }, 'Moderator')
+            )
+          ),
+          h('td', {},
+            // Delete button
+            h('button', {
+              onclick: () => {
+                if (confirm(`Xóa người dùng ${user.email}?`)) {
+                  fetch('/api/delete-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id })
+                  })
+                  .then(r => r.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert('Xóa thành công');
+                      location.reload();
+                    } else {
+                      alert('Lỗi: ' + (data.error || 'Không xác định'));
+                    }
+                  })
+                  .catch(err => alert('Lỗi mạng: ' + err.message));
+                }
+              }
+            }, 'Xóa')
+          )
+        );
+
+        // Mount row vào tbody bằng VDOM
+        const tr = document.createElement('tr');
+        tableBody.appendChild(tr);
+        render(() => row, tr);
+      });
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('user-table').style.display = 'table';
+    }
+
+    // ==========================================
+    // Khởi động
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Hardcode mode: render ngay mock data
+      renderUsers();
+
+      // Khi sẵn sàng dùng Supabase thật:
+      // fetch('/api/users')
+      //   .then(r => r.json())
+      //   .then(data => renderUsers(data))
+      //   .catch(err => {
+      //     document.getElementById('loading').textContent = 'Lỗi tải dữ liệu: ' + err.message;
+      //   });
+    });
+  </script>
+  <!---->
   
   <script>
- 
-function AdminUsersPage() {
-  const { h } = window.App.VDOM;
-  const { useState, useEffect } = window.App.Hooks;
+  // ==========================================
+  // Mock data (giữ nguyên)
+  // ==========================================
+  const mockUsers = [
+    { id: 'cda90efc-4bcd-4d50-bb07-88eb339f49f0', email: 'user1@example.com', role: 'user' },
+    { id: 'a7b1c9d3-2e4f-4b6a-8c7d-9e0f1a2b3c4d', email: 'admin2@example.com', role: 'admin' },
+    { id: '894e9307-df5a-4933-b14b-4fa6496ed363', email: 'test3@gmail.com', role: 'user' },
+    { id: '9a8b7c6d-5e4f-4a3b-2c1d-0e9f8a7b6c5d', email: 'demo4@site.vn', role: 'moderator' }
+  ];
+async function loadUsers() {
+  try {
+    const res = await fetch('/api/users');
+    const data = await res.json();
 
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  // ===============================
-  // Load users
-  // ===============================
-  async function loadUsers() {
-    try {
-      setLoading(true);
-      setError("");
-
-      const res = await fetch("/api/users");
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Fetch users failed");
-      }
-
-      setUsers(data);
-    } catch (err) {
-      setError("Lỗi tải danh sách: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  // ===============================
-  // Change role
-  // ===============================
-  async function changeRole(user, newRole) {
-    if (newRole === user.role) return;
-
-    if (!confirm(`Đổi role của ${user.email} thành ${newRole}?`)) {
-      return;
+    if (!res.ok) {
+      throw new Error(data.error || 'Fetch users failed');
     }
 
-    try {
-      const res = await fetch("/api/change-role", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, newRole })
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Không xác định");
-      }
-
-      alert("Đổi role thành công");
-      loadUsers(); // reload list
-    } catch (err) {
-      alert("Lỗi: " + err.message);
-    }
+    renderUsers(data);
+  } catch (err) {
+    document.getElementById('loading').textContent =
+      'Lỗi tải danh sách: ' + err.message;
   }
-
-  // ===============================
-  // Delete user
-  // ===============================
-  async function deleteUser(user) {
-    if (!confirm(`Xóa người dùng ${user.email}?`)) return;
-
-    try {
-      const res = await fetch("/api/delete-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id })
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Không xác định");
-      }
-
-      alert("Xóa thành công");
-      loadUsers();
-    } catch (err) {
-      alert("Lỗi: " + err.message);
-    }
-  }
-
-  // ===============================
-  // Render states
-  // ===============================
-  if (loading) {
-    return h("div", { id: "loading" }, "Đang tải danh sách...");
-  }
-
-  if (error) {
-    return h("div", { style: { color: "red", padding: "20px" } }, error);
-  }
-
-  // ===============================
-  // Render table
-  // ===============================
-  return h("div", { style: { padding: "20px" } },
-    h("h1", { style: { textAlign: "center" } }, "Admin - Quản lý người dùng"),
-
-    h("table", {
-      style: {
-        width: "100%",
-        borderCollapse: "collapse",
-        background: "white",
-        marginTop: "20px"
-      },
-      border: 1,
-      cellPadding: 10
-    },
-      h("thead", null,
-        h("tr", null,
-          h("th", null, "Email"),
-          h("th", null, "User ID"),
-          h("th", null, "Role"),
-          h("th", null, "Thao tác")
-        )
-      ),
-
-      h("tbody", null,
-        users.map(user =>
-          h("tr", { key: user.id },
-
-            h("td", null, user.email),
-
-            h("td", null, user.id.slice(0, 8) + "..."),
-
-            h("td", null,
-              h("select", {
-                value: user.role,
-                onChange: e => changeRole(user, e.target.value)
-              },
-                ["user", "admin", "moderator"].map(role =>
-                  h("option", { value: role },
-                    role.charAt(0).toUpperCase() + role.slice(1)
-                  )
-                )
-              )
-            ),
-
-            h("td", null,
-              h("button", {
-                onClick: () => deleteUser(user),
-                style: {
-                  padding: "6px 12px",
-                  background: "#e74c3c",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }
-              }, "Xóa")
-            )
-          )
-        )
-      )
-    )
-  );
 }
+  // ==========================================
+  // Render users – THUẦN DOM
+  // ==========================================
+  function renderUsers(data) {
+    const tableBody = document.getElementById('user-body');
+    tableBody.innerHTML = '';
 
-window.App.Router.addRoute("/", AdminUsersPage);
-window.App.Router.init(document.getElementById("app"), {hash: false})
+    data.forEach(user => {
+      const tr = document.createElement('tr');
 
+      // Email
+      const tdEmail = document.createElement('td');
+      tdEmail.textContent = user.email;
+
+      // User ID (rút gọn)
+      const tdId = document.createElement('td');
+      tdId.textContent = user.id.substring(0, 8) + '...';
+
+      // Role select
+      const tdRole = document.createElement('td');
+      const select = document.createElement('select');
+
+      ['user', 'admin', 'moderator'].forEach(role => {
+        const option = document.createElement('option');
+        option.value = role;
+        option.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+        if (role === user.role) option.selected = true;
+        select.appendChild(option);
+      });
+
+      select.addEventListener('change', () => {
+        const newRole = select.value;
+        if (newRole === user.role) return;
+
+        if (!confirm(`Đổi role của ${user.email} thành ${newRole}?`)) {
+          select.value = user.role; // rollback
+          return;
+        }
+
+        fetch('/api/change-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, newRole })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            alert('Đổi role thành công');
+            location.reload();
+          } else {
+            alert('Lỗi: ' + (data.error || 'Không xác định'));
+            select.value = user.role;
+          }
+        })
+        .catch(err => {
+          alert('Lỗi mạng: ' + err.message);
+          select.value = user.role;
+        });
+      });
+
+      tdRole.appendChild(select);
+
+      // Delete button
+      const tdAction = document.createElement('td');
+      const btnDelete = document.createElement('button');
+      btnDelete.textContent = 'Xóa';
+
+      btnDelete.addEventListener('click', () => {
+        if (!confirm(`Xóa người dùng ${user.email}?`)) return;
+
+        fetch('/api/delete-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            alert('Xóa thành công');
+            location.reload();
+          } else {
+            alert('Lỗi: ' + (data.error || 'Không xác định'));
+          }
+        })
+        .catch(err => alert('Lỗi mạng: ' + err.message));
+      });
+
+      tdAction.appendChild(btnDelete);
+
+      // Append
+      tr.appendChild(tdEmail);
+      tr.appendChild(tdId);
+      tr.appendChild(tdRole);
+      tr.appendChild(tdAction);
+      tableBody.appendChild(tr);
+    });
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('user-table').style.display = 'table';
+  }
+
+  // ==========================================
+  // Init
+  // ==========================================
+  document.addEventListener('DOMContentLoaded', () => {
+    //renderUsers();
+    loadUsers(); // ← dùng data thật
+    // Sau này dùng thật:
+    // fetch('/api/users')
+    //   .then(r => r.json())
+    //   .then(renderUsers)
+    //   .catch(err => {
+    //     document.getElementById('loading').textContent =
+    //       'Lỗi tải dữ liệu: ' + err.message;
+    //   });
+  });
 </script>
   
   
