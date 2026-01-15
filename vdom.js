@@ -828,13 +828,26 @@ if (key === "value" && "value" in el) {
     newVNode.children = (newVNode.children || []).map(toVNode);
     patchChildren(el, oldVNode.children, newVNode.children);
     // Sau khi patch children
+/*
 if (el.tagName === "SELECT" && newProps && "value" in newProps) {
   const next = newProps.value ?? "";
   if (el.value !== next) {
     el.value = next;
   }
+}*/
+// --- FORCE SYNC SELECT AFTER CHILDREN PATCH ---
+if (
+  el.tagName === "SELECT" &&
+  newVNode.props &&
+  "value" in newVNode.props
+) {
+  queueMicrotask(() => {
+    if (el.value !== newVNode.props.value) {
+      el.value = newVNode.props.value ?? "";
+    }
+  });
 }
-    
+
   }
 
 
