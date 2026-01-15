@@ -184,7 +184,7 @@ function AdminUsersPage() {
 
             h("td", null,
               h("select", {
-                value: user.role,
+                //value: user.role,
                 onChange: e => changeRole(user, e.target.value)
               },
                 ["user", "admin", "moderator"].map(role =>
