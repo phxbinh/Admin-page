@@ -368,7 +368,7 @@ window.App = window.App || {};
         continue;
       }
 */
-if (key === "value" && el.tagName === "SELECT") {
+if (key === "value" && el.tagName === "select") {
   const next = value ?? "";
   if (el.value !== next) {
     const options = el.options;
